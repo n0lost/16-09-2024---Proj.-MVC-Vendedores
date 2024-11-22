@@ -1,0 +1,245 @@
+//Gabriel Afonso dos Santos - CB3026167
+
+#include <iostream>
+#include <string>
+#include <iomanip>
+using namespace std;
+
+class Venda {
+private:
+    int qtde;
+    double valor;
+
+public:
+    Venda(int qtde = 0, double valor = 0.0) : qtde(qtde), valor(valor) {}
+
+    double valorMedio() {
+        return qtde > 0 ? valor / qtde : 0.0;
+    }
+
+    double getValor() const {
+        return valor;
+    }
+
+    int getQtde() const {
+        return qtde;
+    }
+};
+
+class Vendedor {
+private:
+    int id;
+    string nome;
+    double percComissao;
+    Venda asVendas[31];
+
+public:
+    Vendedor(int id = 0, string nome = "", double percComissao = 0.0)
+        : id(id), nome(nome), percComissao(percComissao) {}
+
+    void registrarVenda(int dia, Venda venda) {
+        if (dia >= 1 && dia <= 31) {
+            asVendas[dia - 1] = venda;
+        }
+    }
+
+    double valorVendas() {
+        double total = 0.0;
+        for (int i = 0; i < 31; i++) {
+            total += asVendas[i].getValor();
+        }
+        return total;
+    }
+
+    double valorComissao() {
+        return valorVendas() * percComissao / 100.0;
+    }
+
+    double valorMedio() {
+        int diasComVenda = 0;
+        double total = 0.0;
+        for (int i = 0; i < 31; i++) {
+            if (asVendas[i].getQtde() > 0) {
+                diasComVenda++;
+                total += asVendas[i].valorMedio();
+            }
+        }
+        return diasComVenda > 0 ? total / diasComVenda : 0.0;
+    }
+
+    void exibirVendedor() {
+        cout << "ID: " << id << ", Nome: " << nome << endl;
+        cout << "Total de Vendas: R$ " << fixed << setprecision(2) << valorVendas() << endl;
+        cout << "Comissao: R$ " << fixed << setprecision(2) << valorComissao() << endl;
+        cout << "Valor Medio das Vendas: R$ " << fixed << setprecision(2) << valorMedio() << endl;
+    }
+
+    int getId() {
+        return id;
+    }
+
+    string getNome() {
+        return nome;
+    }
+
+    bool temVendas() {
+        for (int i = 0; i < 31; i++) {
+            if (asVendas[i].getQtde() > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+};
+
+class Vendedores {
+private:
+    Vendedor osVendedores[10];
+    int max = 10;
+    int qtde = 0;
+
+public:
+    bool addVendedor(Vendedor v) {
+        if (qtde < max) {
+            osVendedores[qtde] = v;
+            qtde++;
+            return true;
+        }
+        return false;
+    }
+
+    bool delVendedor(int id) {
+        for (int i = 0; i < qtde; i++) {
+            if (osVendedores[i].getId() == id) {
+                if (osVendedores[i].temVendas()) {
+                    cout << "Nao e possivel excluir, vendedor tem vendas registradas!" << endl;
+                    return false;
+                }
+                for (int j = i; j < qtde - 1; j++) {
+                    osVendedores[j] = osVendedores[j + 1];
+                }
+                qtde--;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    Vendedor* searchVendedor(int id) {
+        for (int i = 0; i < qtde; i++) {
+            if (osVendedores[i].getId() == id) {
+                return &osVendedores[i];
+            }
+        }
+        return nullptr;
+    }
+
+    void listarVendedores() {
+        double totalVendas = 0.0;
+        double totalComissao = 0.0;
+        for (int i = 0; i < qtde; i++) {
+            osVendedores[i].exibirVendedor();
+            totalVendas += osVendedores[i].valorVendas();
+            totalComissao += osVendedores[i].valorComissao();
+        }
+        cout << "Total de vendas de todos os vendedores: R$ " << fixed << setprecision(2) << totalVendas << endl;
+        cout << "Total de comissoes de todos os vendedores: R$ " << fixed << setprecision(2) << totalComissao << endl;
+    }
+
+    int getQtde() const {
+        return qtde;
+    }
+};
+
+int main() {
+    Vendedores vendedores;
+    int opcao;
+
+    do {
+        cout << "\nMenu:\n";
+        cout << "0. Sair\n";
+        cout << "1. Cadastrar vendedor\n";
+        cout << "2. Consultar vendedor\n";
+        cout << "3. Excluir vendedor\n";
+        cout << "4. Registrar venda\n";
+        cout << "5. Listar vendedores\n";
+        cout << "Escolha uma opcao: ";
+        cin >> opcao;
+
+        if (opcao == 1) {
+            if (vendedores.getQtde() < 10) {
+                int id;
+                string nome;
+                double percComissao;
+                cout << "Informe o ID do vendedor: ";
+                cin >> id;
+                cin.ignore();
+                cout << "Informe o nome do vendedor: ";
+                getline(cin, nome);
+                cout << "Informe o percentual de comissao: ";
+                cin >> percComissao;
+
+                Vendedor vendedor(id, nome, percComissao);
+                vendedores.addVendedor(vendedor);
+                cout << "Vendedor cadastrado com sucesso!" << endl;
+            } else {
+                cout << "Limite de vendedores atingido!" << endl;
+            }
+        }
+        else if (opcao == 2) {
+            int id;
+            cout << "Informe o ID do vendedor para consulta: ";
+            cin >> id;
+
+            Vendedor* vendedor = vendedores.searchVendedor(id);
+            if (vendedor != nullptr) {
+                vendedor->exibirVendedor();
+            } else {
+                cout << "Vendedor nao encontrado!" << endl;
+            }
+        }
+        else if (opcao == 3) {
+            int id;
+            cout << "Informe o ID do vendedor para excluir: ";
+            cin >> id;
+
+            if (vendedores.delVendedor(id)) {
+                cout << "Vendedor excluido com sucesso!" << endl;
+            } else {
+                cout << "Falha ao excluir o vendedor!" << endl;
+            }
+        }
+        else if (opcao == 4) {
+            int id, dia, qtde;
+            double valor;
+            cout << "Informe o ID do vendedor: ";
+            cin >> id;
+
+            Vendedor* vendedor = vendedores.searchVendedor(id);
+            if (vendedor != nullptr) {
+                cout << "Informe o dia da venda (1-31): ";
+                cin >> dia;
+                cout << "Informe a quantidade de vendas: ";
+                cin >> qtde;
+                cout << "Informe o valor total das vendas: ";
+                cin >> valor;
+
+                Venda venda(qtde, valor);
+                vendedor->registrarVenda(dia, venda);
+                cout << "Venda registrada com sucesso!" << endl;
+            } else {
+                cout << "Vendedor nao encontrado!" << endl;
+            }
+        }
+        else if (opcao == 5) {
+            vendedores.listarVendedores();
+        }
+        else if (opcao != 0) {
+            cout << "Opcao invalida!" << endl;
+        }
+
+    } while (opcao != 0);
+
+    cout << "Saindo..." << endl;
+    return 0;
+}
